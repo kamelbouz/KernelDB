@@ -1,4 +1,6 @@
 # KernelDB
+> Ce projet est la continuation de [MiniDB](https://github.com/kamelbouz/minidb).
+> L'historique du développement (J1 à J5.5) est disponible dans l'archive.
 
 KernelDB est un moteur relationnel embarqué expérimental en C++17, accompagné
 d'un shell SQL multi-base. Le projet vise un moteur utilisable, compréhensible
