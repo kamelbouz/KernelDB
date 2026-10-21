@@ -1,0 +1,40 @@
+# Build directories
+build/
+build-*/
+cmake-build-*/
+
+# Runtime data
+kerneldb_data/
+*.tbl
+*.meta
+*.idx
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Packages
+*.deb
+*.tar.gz
+*.rpm
+
+# Compiled binaries
+*.o
+*.obj
+*.a
+*.so
+*.dll
+
+# Backup files
+*.bak
+
+# Example data
+example_data/
+examples/*/example_data/
+

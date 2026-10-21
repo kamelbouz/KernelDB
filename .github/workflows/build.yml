@@ -1,0 +1,98 @@
+name: Build and Package
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux
+          - os: windows-latest
+            name: windows
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux tools
+        if: matrix.name == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ ninja-build
+
+      - name: Setup MSYS2 (Windows)
+        if: matrix.name == 'windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-nsis
+
+      - name: Configure (Linux)
+        if: matrix.name == 'linux'
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DKERNELDB_BUILD_TESTS=ON
+
+      - name: Configure (Windows)
+        if: matrix.name == 'windows'
+        shell: msys2 {0}
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DKERNELDB_BUILD_TESTS=ON
+
+      - name: Build (Linux)
+        if: matrix.name == 'linux'
+        run: cmake --build build -j
+
+      - name: Build (Windows)
+        if: matrix.name == 'windows'
+        shell: msys2 {0}
+        run: cmake --build build
+
+      - name: Test (Linux)
+        if: matrix.name == 'linux'
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Test (Windows)
+        if: matrix.name == 'windows'
+        shell: msys2 {0}
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Package (Linux)
+        if: matrix.name == 'linux'
+        working-directory: build
+        run: cpack -G DEB && cpack -G TGZ
+
+      - name: Package (Windows)
+        if: matrix.name == 'windows'
+        shell: msys2 {0}
+        working-directory: build
+        run: cpack -G ZIP -C Release
+
+      - name: Upload Linux packages
+        if: matrix.name == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-linux
+          path: |
+            build/*.deb
+            build/*.tar.gz
+
+      - name: Upload Windows packages
+        if: matrix.name == 'windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-windows
+          path: |
+            build/*.exe
+            build/*.zip
